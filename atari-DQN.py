@@ -11,9 +11,9 @@ DEVICE = torch.device('cuda')
 DEVICE_COUNT = torch.cuda.device_count()
 
 LOAD_FROM_FILE = False
-model_path = "/scratch/project_2005388/model/"
+model_path = "model/"
 
-game = "space_invaders"
+game = "pong"
 
 games = {"beam_rider":"roms/Beamrider.bin",
          "breakout": "roms/Breakout - Breakaway IV.bin",
@@ -112,6 +112,9 @@ class ReplayStorage:
         self.is_terminals[pos] = end_state.is_terminal
         self.n_added += 1
 
+
+
+# Maybe a bit useless class because we anyway need to deal directely with the tensors
 class State:
     def __init__(self, num_images, image_size):
         self.tensor = torch.zeros((num_images,) + image_size, device=DEVICE)
@@ -360,8 +363,7 @@ if LOAD_FROM_FILE:
         score_history = pickle.load(file)
 else:
     q_model = QModel(4, (110, 84), num_actions).to(DEVICE)
-    optimizer = optim.RMSprop(q_model.parameters(), lr=1e-5, eps=0.01, momentum=0.95, alpha=0.95)
-    #optimizer = optim.Adam(q_model.parameters(), lr=1e-4)
+    optimizer = optim.RMSprop(q_model.parameters(), lr=1e-5)
     model_init_state = State(4, (110, 84))
     storage = ReplayStorage(capacity=1000000, state_size=(4, 110, 84),
                             num_actions=num_actions, batch_size=32)
@@ -377,9 +379,6 @@ generator = np.random.Generator(np.random.PCG64(1337))
 torch.manual_seed(1337)
 
 loss_history = []
-
-# set frame_k = 4 for every other game than space invader
-# for space invaders use frame_k = 3
 frame_k = 3
 
 q_evaluator = QEvaluator(ale, agent, generator)
